@@ -1,0 +1,589 @@
+
+
+<style>
+
+</style>
+
+<div id="fig_el3519846086571682498570819"></div>
+<script>
+function mpld3_load_lib(url, callback){
+  var s = document.createElement('script');
+  s.src = url;
+  s.async = true;
+  s.onreadystatechange = s.onload = callback;
+  s.onerror = function(){console.warn("failed to load library " + url);};
+  document.getElementsByTagName("head")[0].appendChild(s);
+}
+
+if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
+   // already loaded: just create the figure
+   !function(mpld3){
+       
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+       mpld3.draw_figure("fig_el3519846086571682498570819", {"width": 576.0, "height": 288.0, "axes": [{"bbox": [0.125, 0.125, 0.775, 0.755], "xlim": [4.981338452201847, 12.896977522973259], "ylim": [-0.5293657512625252, 6.506695536306717], "xdomain": [4.981338452201847, 12.896977522973259], "ydomain": [-0.5293657512625252, 6.506695536306717], "xscale": "linear", "yscale": "linear", "axes": [{"position": "bottom", "nticks": 10, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}, {"position": "left", "nticks": 9, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}], "axesbg": "#FFFFFF", "axesbgalpha": null, "zoomable": true, "id": "el351984610970896", "lines": [{"data": "data01", "xindex": 0, "yindex": 1, "coordinates": "data", "id": "el351984615119120", "color": "#1F77B4", "linewidth": 1.5, "dasharray": "none", "alpha": 1, "zorder": 2, "drawstyle": "default"}], "paths": [], "markers": [], "texts": [{"text": "loss: 4.7942857142857145", "position": [1, 1], "coordinates": "axes", "h_anchor": "end", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984612236240"}, {"text": "grade", "position": [0.5, -0.09657836644591611], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608850832"}, {"text": "hrs on social media / day", "position": [-0.038922491039426535, 0.49999999999999994], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -90.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608848528"}, {"text": "Grade vs. Social Media Time at ISF", "position": [0.5, 1.0275938189845473], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -0.0, "fontsize": 12.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984615151312"}], "collections": [{"offsets": "data02", "xindex": 0, "yindex": 1, "paths": [[[[0.0, -0.5], [0.13260155, -0.5], [0.25978993539242673, -0.44731684579412084], [0.3535533905932738, -0.3535533905932738], [0.44731684579412084, -0.25978993539242673], [0.5, -0.13260155], [0.5, 0.0], [0.5, 0.13260155], [0.44731684579412084, 0.25978993539242673], [0.3535533905932738, 0.3535533905932738], [0.25978993539242673, 0.44731684579412084], [0.13260155, 0.5], [0.0, 0.5], [-0.13260155, 0.5], [-0.25978993539242673, 0.44731684579412084], [-0.3535533905932738, 0.3535533905932738], [-0.44731684579412084, 0.25978993539242673], [-0.5, 0.13260155], [-0.5, 0.0], [-0.5, -0.13260155], [-0.44731684579412084, -0.25978993539242673], [-0.3535533905932738, -0.3535533905932738], [-0.25978993539242673, -0.44731684579412084], [-0.13260155, -0.5], [0.0, -0.5]], ["M", "C", "C", "C", "C", "C", "C", "C", "C", "Z"]]], "pathtransforms": [[6.0, 0.0, 0.0, 6.0, 0.0, 0.0]], "alphas": [0.5], "edgecolors": ["#1F77B4"], "facecolors": ["#1F77B4"], "edgewidths": [1.0], "offsetcoordinates": "data", "pathcoordinates": "display", "zorder": 1, "id": "el351984613140432"}], "images": [], "sharex": [], "sharey": []}], "data": {"data01": [[5.341140228146002, 1.0], [12.537175747029105, 1.0]], "data02": [[5.9392488628461075, 3.956300566464006], [9.071374191856208, 4.863248763890248], [9.010986280667174, 2.0261380443397843], [8.796065499381399, 3.0363676349750155], [8.914199606549122, 2.1585593580210563], [6.978007888059858, 1.0125243185553527], [5.89468904584821, 0.9854519982069991], [6.999848158581999, -0.08074410379899163], [6.933197607927004, 1.929952194421052], [6.0996894774427535, 0.11458558092158591], [11.877643713748004, 3.0505054038747157], [6.066690275137741, 1.8939489200457376], [5.910471197966965, 2.122449050060736], [12.001547182929135, 3.0940567306169613], [5.919073724076084, 2.0304613883327662], [6.9653356067707115, 1.0506008476216107], [8.075886320607328, 3.0443026060389915], [6.033745570620001, 2.0788894599377654], [6.829417745845436, 3.0452976754142704], [6.221374844967944, 2.0447822497389687], [5.859435567250385, 2.1491598449161016], [11.93888821380295, 5.88657379115351], [5.894868166815059, 0.9981563027357157], [5.978311007223333, 5.877417675522401], [6.214895598010449, 1.9352141993906042], [6.073171807466587, 3.0063773100690114], [5.952714949132429, 2.1787651636432166], [5.985645611747843, 3.0447246898460762], [5.970421407559555, 2.0225842990779586], [7.061152641827301, 1.8316564435872575], [7.798668247175858, 0.7604624035851847], [8.128492150999708, 2.0674712676719613], [7.953738683753997, 4.070599320936727], [6.1366391309823545, 1.0754607791129878], [7.927670719270266, 0.010767233213151444], [7.1472364640523915, 2.970295884159178], [6.836063216145833, 0.833649114800078], [8.859764979858323, 0.14749648765508136], [6.9807214350826685, 3.983758961553476], [7.932021944096157, 4.013529296008991], [5.701726860315585, 1.9860056319784087], [7.9404093207225905, 2.004598932920737], [10.926247925648045, 3.136852293414066], [7.10878994380514, 1.011446884171569], [10.917700135702892, 4.974122344115416], [7.001254571132183, 2.879084350109273], [11.060690725209312, 2.9320531387935045], [6.85497030334924, 3.8557739921399494], [7.99018286531862, 6.039386615010812], [7.050318449179423, 3.895891065686258], [6.912334339014958, 3.040720174614394], [7.083145263331065, 3.0967029256272767], [5.912503296436652, 1.0393166638212057], [7.129363468544123, 2.0043479663650206], [10.921766117251046, 1.9563545748737499], [11.121283081936015, 1.8789203527685556], [10.748335850969912, 2.0004285155928785], [11.030560568610879, 2.972277676291493], [5.961397726447099, 1.8251638473121403], [9.94663687639824, 5.966677789213851], [8.017548693521146, 4.029619609641353], [5.8553506003624625, 2.9487962950519617], [6.128943537948554, 1.9609365671996986], [7.062464722517217, -0.009027576883264582], [6.128420617710438, 0.801180821430225], [7.094440910160422, -0.04489740360934192], [7.03509341184475, 0.050026605572586716], [6.879950454238935, 1.8751876833317949], [8.045639977755812, 6.173077659197658], [9.06728262700586, 2.9205406150997217], [6.024363242943681, 0.05955236026314173], [6.891616004740921, 2.973492487650892], [9.894052887573428, 1.9855879578409874], [7.043386887239582, 1.9695376645820408], [7.045567998557556, 2.9095163189470963], [9.06217702225317, 1.8348863707680576], [9.97846971995725, 0.009567241667408768], [5.954437421200605, -0.007972613217842482], [5.936384161249518, 1.876230101502567], [7.066083570977445, 0.07475267662462327], [8.882291800678473, 1.0251913838871], [6.970887756569745, 0.9214221388460422], [7.022978083991016, 1.914552603284215], [9.016017429178122, 6.014000709398029], [6.0114764584031395, 3.0314307321258847], [6.845150380715416, 1.0037217595704018], [9.073365630758746, 2.9324450375351336], [6.960255568263738, 4.851632543044284], [8.868270088331897, 3.0448083285038234], [8.921256497192143, 1.1020013109323148], [7.02144015961104, 1.9771715023105672], [7.013247686803096, 0.08070057563085352], [6.935222844389641, 2.951815217769415], [7.077837857542035, 0.1359298524088098], [7.014708298558029, 1.8726694302745768], [7.055524467027397, 1.9730038593667707], [7.008933727167377, 2.919509267896034], [7.034782367940428, 1.835429751236289], [6.976519073384373, -0.006146127682499535], [6.935238903498195, 2.054348780210467], [6.937821871525496, -0.12201829086258963], [7.038176870926125, 3.9867986945032636], [6.855845866633701, 3.1254091097480443], [10.974900011286941, 2.1088993342235187], [10.974071649432956, 1.7774585041420183], [6.018539068959227, 1.9766272565071774], [7.13468316516433, 1.1151014855914188], [7.116744526071204, -0.06514397788554202], [11.126850601709247, 4.047491378425654], [6.019376258536221, 1.9320842119381885], [7.246368860025309, 2.034784418135992], [6.952065651862486, 0.0846767978668116], [12.132894565837923, 2.985098381695673], [6.970173520423853, 0.07994278985346294], [6.988293756886949, 1.9567855633287567], [6.933627937888084, 4.115301039427597], [7.123045627263198, 0.9774514938899617], [7.128472110817466, 4.050531996561231], [7.036493720575152, 1.9272321127446586], [10.919399493875968, 2.02482682435589], [6.890789520704682, 1.9630319879418074], [6.8949934060210625, 2.926995720437767], [7.082699090136753, 3.994422620201759], [7.0002192862826735, 0.8848548988117185], [7.229109364344569, 2.0461446670208527], [6.960366066282821, 3.0034022298306646], [11.939937557824187, 4.075824555399192], [6.912364649898464, 4.948235444758959], [7.037297227297259, 0.12251154564919192], [10.969774519777616, 3.0710272840474193], [7.079965255481578, -0.12931823462122377], [6.8610176254819075, 2.9500343165687766], [9.01057011624151, 1.9547241617508195], [6.999213889488063, 2.1497777322867524], [6.782490081352169, 0.10770844350658715], [9.043208906130609, 2.13052640694524], [7.023929929361674, 1.9684037384096047], [9.084652901996218, 2.772086186093405], [12.203362793335982, 0.8514235981160956], [7.051430149959252, 0.9930487128126692], [7.035572595544885, 3.1834234635991314], [6.92633098722904, 4.022343304146697], [7.016947509290209, 5.915916169421968], [7.020371925217771, -0.13279793612651222], [6.900611413204682, -0.04147957983875572], [9.141679964936062, 1.8560470954542372], [7.029880102846, 3.0226059491945936], [6.9611732519473515, 3.1809053170303723], [8.8976177923208, 1.9443553287875783], [9.05708950010838, 3.015492061048623], [6.863695298241458, 1.9986934263362137], [7.072834519629356, 1.9608443785901326], [7.016236318554253, 3.000427752678715], [6.988025577055251, 1.0571447810440449], [6.9576690505525765, 2.903655804285726], [6.971039215446471, 2.0917395112147084], [7.00291263109983, 1.0087328897945615], [6.889143839760902, 2.994196801433378], [8.842905234872275, 4.963251894448033], [7.028735503617145, 1.821304131424023], [7.018895113678263, 1.0072431453472794], [9.925294939202766, 3.0694844857433825], [7.028962393584534, 3.0443439211276586], [7.005296096327089, 1.9659602205043945], [12.178943609761504, 1.0262455955573466], [7.038107351419328, 1.9897342504837852], [12.094069636379517, 2.963669811671835], [6.978421223031423, 2.003085187521972], [7.115314699646976, 0.07562314660203207], [7.03917032175927, 0.9529087851896095], [7.009989003444992, 3.0195959292888395], [6.917756229139037, 2.941143134201076], [9.940276562517688, 2.9846655438494407], [7.9761705984738835, 3.0760647535536543], [7.023987958838545, 0.13189730360306862], [9.867131738253544, 2.9571489123857426], [7.1822991534071985, 0.879847547365039], [10.125642984103449, 3.0405901735708816], [6.9153282591801055, 1.9453957216319642], [7.904474612345827, 4.92742714150396], [6.765668210454162, 0.03685687778950129], [7.074775429828559, 3.934650627540801], [6.985385927474602, 1.9105286922933975], [7.979964727023825, 2.940510574857207], [7.0784726830064715, 0.995821869039326], [7.104588263544837, -0.139524466740613], [7.106957695337535, 3.7144229841551835], [9.176129038536853, 3.9304273339981366], [6.000337476665308, 1.1097490441583129], [7.049457324270754, 4.893889806826992], [7.1166147582930925, 2.906510388748569], [6.971105994865315, 0.9765906079711282], [7.119013481084501, 3.986881160560075], [6.932789651628247, 2.7142011968984114], [7.907480015045241, 3.8960616781589583], [8.014460421330085, 5.945994416720707], [6.851518301749276, 2.0608559479495177], [7.01778586271622, 4.005776268776607], [5.996413494576923, -0.051242836941258245], [7.050787599758609, 3.130675463526245], [6.972194905026868, 2.7651568360775607], [7.017769656502579, 3.1132062633105515], [6.033539408079173, 1.9398705014907154], [7.011607210010218, 3.8823471886577927], [8.100507115160351, 1.9686216779917445], [6.970406977301956, 1.022305009671588], [6.729668202990257, 1.9478081674899288], [5.92713264110287, 1.0765234701796322], [6.181474910715533, 2.9447853030611753], [8.236957293027753, 1.0698811444425016], [11.948484445835074, 2.1368694964467845], [5.942268015060396, 1.109795180012629], [5.911057138059918, 5.901304263370383], [7.03979579982797, 1.997475531618789], [6.0631579640685, 0.9820404233556751], [8.199454203268536, 1.951917015082084], [5.9656852260198265, 1.1384434910941226], [6.94772269125668, 3.085109294810381], [8.103133851053068, 1.955451135020451], [12.00675729156023, 6.1072900433951975], [12.030532578424006, 3.964645995773847], [7.038678073752235, 1.13159847811672], [12.090952068158249, 1.9757275391390803], [8.166075650293202, 1.7936362553759841], [6.986443901477176, 3.099561922261949], [11.942724970536492, 1.9318143884459789], [6.0568730174011, 1.9285378389182761], [7.103692293781631, 0.9102167084262033], [7.09414988968766, 1.1465028148094547], [7.044099510445788, 1.1379508464161696], [6.933416863688394, 1.0358087794329942], [5.950853880295724, 0.9765310032406693], [6.840372075114291, 4.8790136371210036], [5.956378601915322, 4.070729689565522], [12.146502750428812, 6.04577633683459], [6.127720060223388, 2.883328501832415], [6.033577761641597, 2.0071844235620944], [5.986582502236725, 2.094812517793771], [7.240750447398118, 3.0912557099135025], [6.080989156349924, 5.01227940950555], [6.025575524386637, 5.01238706477824], [5.955355875573795, 0.9027445987640996], [5.937890078160576, 4.998909150770666], [6.110676618423789, 3.0784540406071033], [5.674953181839125, 1.0559303990582407], [6.088373151611346, 0.013714180431259375], [6.015145029558148, -0.11256757096759731], [6.085129415375195, 3.8050705056037195], [5.863084924802325, 0.9985814544264116], [5.962348307127369, 2.2332497899031334], [5.9649230554292885, 3.955195968350242], [6.101692655933659, 3.069396896422898], [6.0894401081490175, 2.972887376160684], [5.9164835965731335, 0.8784959377117616], [5.896117558800773, 1.9255344679652493], [5.97289711333739, -0.0316617609629062], [6.084134968549009, -0.06075461667664183], [10.918517540095785, 3.1386122525733735], [10.070183727038904, 6.115321629255317], [5.990050983452498, -0.09353283091709186], [5.924138608286697, 2.0729685747179154], [6.949656232076195, 2.9498718448944286], [8.018114005839848, 0.1101107564290858], [8.126543077430558, 4.897387229744359], [8.857219177970888, 3.908872159888383], [5.948127207404934, 4.016164423125316], [6.990811487170073, 1.9389746913380288], [6.927486914052092, 1.0094522722351962], [5.933552374410029, 3.967422208927585], [6.031105117232685, 0.8683436501527841], [5.977400002154464, 1.0633357006370534], [6.994025242679091, 6.10295994329139], [9.076769083503248, 4.025698711905054], [6.011524580768517, 0.859419024359475], [6.133430111822938, 1.90359555283246], [8.942452835204952, 2.120369551508353], [6.942437719141302, 6.154449385894584], [8.92549338672737, 2.92165724316931], [8.945049291402125, 3.036899969772065], [8.996144684673796, 3.0331154098227655], [9.043546080883008, 2.9055630759810676], [8.867116989130942, 4.07041346417318], [8.003606068987118, 4.101549054166533], [9.02728031163258, 4.218711985839369], [8.102904241008513, 2.160783021107977], [9.141448056839122, -0.07665087277278673], [9.215057799922313, 2.256245335914358], [9.08340183456365, 4.0457646458974414], [8.999632352514466, 2.8893183559817905], [8.805487918617805, 4.975853774367382], [8.9523988832177, 2.994973582723711], [8.985629634972685, 4.2079249132175125], [5.842879785043578, 2.0499445894812403], [9.04393750290859, 2.918040359232974], [8.95106351968691, 6.04606273148574], [8.834136643046138, 3.9926416981215898], [7.926986203136015, 2.9289387596264533], [6.025628375972559, 2.1352130840064167], [5.949969167505028, -0.19574787415346778], [8.963208365214374, 4.9412417468264165], [8.947705268432195, 6.109685017639482], [6.09638423738171, 2.8548844140700926], [8.8933919808842, 2.8417884200862193], [8.063749156647923, 3.0563611472228756], [7.947413091443773, 3.1289164883917393], [7.039455597226515, 2.958163636675489], [7.920341231306327, 4.004396937513801], [5.9773629443722385, 0.8490225236164677], [9.066533810703417, 3.1390759044178203], [10.100610779726077, 1.0247246996643329], [8.92561125876853, 1.0450300017050018], [9.102371059495145, 5.13581398720287], [9.849136159432607, 6.016396102271576], [10.892620803953003, 4.043709055078779], [5.978786715200699, 1.0042350048490467], [9.12663676809012, 1.9963158208187668], [9.070140914921012, 5.928691494435902], [9.967546870239524, 3.9835956135410377], [9.91985138280326, 1.0551909361908234], [6.940184501731858, -0.1722356877048808], [8.839920749579138, 5.010744228419219], [6.959924207913038, 1.8657062807712839], [9.060122090726743, 2.9974109092435293], [12.002280476821657, 5.020044025055386], [10.919053159885117, 4.818579466633252], [5.914410855799545, 5.855017819140989], [5.866279835209318, -0.056410882941251475], [6.192224841369492, 3.1827719378390036], [6.111530081756645, 2.0061479469859433], [6.128949143551905, 2.076530490413577], [6.033477469445716, 5.906326330425998], [6.129587998123635, 6.060680813539942], [7.066134742578784, 4.875586771735992], [6.055384295782768, 4.985000450821419], [8.92370661951427, 3.135197920873828], [5.721786620427312, 0.09840837642938281], [7.125763753164688, 0.19237506139831273], [5.8138872287761485, 3.183708146389305], [9.114261716149203, 2.84232471681078], [6.239157239014478, 1.9641641452135907], [5.946792678168756, 1.9063258665455989], [9.011072552806795, 2.927848841862687], [6.101691511732264, 4.92374270705918], [7.9244269174044835, 1.9857694407956759], [7.012756389048043, 1.7494148121999564], [5.980147411941227, 2.9658100034459802], [8.772740959841538, 0.9507865536611211], [6.886115972844107, 1.1968485650986245], [10.997454929790718, 4.070978844188203], [11.045040310620069, 2.98950679243181]]}, "id": "el351984608657168", "plugins": [{"type": "reset"}, {"type": "zoom", "button": true, "enabled": false}, {"type": "boxzoom", "button": true, "enabled": false}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "y-intercept (b)", "slider_param_id": "b", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateBSlider"}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "slope (m)", "slider_param_id": "m", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateMSlider"}]});
+   }(mpld3);
+}else if(typeof define === "function" && define.amd){
+   // require.js is available: use it to load d3/mpld3
+   require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
+   require(["d3"], function(d3){
+      window.d3 = d3;
+      mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+         
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+         mpld3.draw_figure("fig_el3519846086571682498570819", {"width": 576.0, "height": 288.0, "axes": [{"bbox": [0.125, 0.125, 0.775, 0.755], "xlim": [4.981338452201847, 12.896977522973259], "ylim": [-0.5293657512625252, 6.506695536306717], "xdomain": [4.981338452201847, 12.896977522973259], "ydomain": [-0.5293657512625252, 6.506695536306717], "xscale": "linear", "yscale": "linear", "axes": [{"position": "bottom", "nticks": 10, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}, {"position": "left", "nticks": 9, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}], "axesbg": "#FFFFFF", "axesbgalpha": null, "zoomable": true, "id": "el351984610970896", "lines": [{"data": "data01", "xindex": 0, "yindex": 1, "coordinates": "data", "id": "el351984615119120", "color": "#1F77B4", "linewidth": 1.5, "dasharray": "none", "alpha": 1, "zorder": 2, "drawstyle": "default"}], "paths": [], "markers": [], "texts": [{"text": "loss: 4.7942857142857145", "position": [1, 1], "coordinates": "axes", "h_anchor": "end", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984612236240"}, {"text": "grade", "position": [0.5, -0.09657836644591611], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608850832"}, {"text": "hrs on social media / day", "position": [-0.038922491039426535, 0.49999999999999994], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -90.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608848528"}, {"text": "Grade vs. Social Media Time at ISF", "position": [0.5, 1.0275938189845473], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -0.0, "fontsize": 12.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984615151312"}], "collections": [{"offsets": "data02", "xindex": 0, "yindex": 1, "paths": [[[[0.0, -0.5], [0.13260155, -0.5], [0.25978993539242673, -0.44731684579412084], [0.3535533905932738, -0.3535533905932738], [0.44731684579412084, -0.25978993539242673], [0.5, -0.13260155], [0.5, 0.0], [0.5, 0.13260155], [0.44731684579412084, 0.25978993539242673], [0.3535533905932738, 0.3535533905932738], [0.25978993539242673, 0.44731684579412084], [0.13260155, 0.5], [0.0, 0.5], [-0.13260155, 0.5], [-0.25978993539242673, 0.44731684579412084], [-0.3535533905932738, 0.3535533905932738], [-0.44731684579412084, 0.25978993539242673], [-0.5, 0.13260155], [-0.5, 0.0], [-0.5, -0.13260155], [-0.44731684579412084, -0.25978993539242673], [-0.3535533905932738, -0.3535533905932738], [-0.25978993539242673, -0.44731684579412084], [-0.13260155, -0.5], [0.0, -0.5]], ["M", "C", "C", "C", "C", "C", "C", "C", "C", "Z"]]], "pathtransforms": [[6.0, 0.0, 0.0, 6.0, 0.0, 0.0]], "alphas": [0.5], "edgecolors": ["#1F77B4"], "facecolors": ["#1F77B4"], "edgewidths": [1.0], "offsetcoordinates": "data", "pathcoordinates": "display", "zorder": 1, "id": "el351984613140432"}], "images": [], "sharex": [], "sharey": []}], "data": {"data01": [[5.341140228146002, 1.0], [12.537175747029105, 1.0]], "data02": [[5.9392488628461075, 3.956300566464006], [9.071374191856208, 4.863248763890248], [9.010986280667174, 2.0261380443397843], [8.796065499381399, 3.0363676349750155], [8.914199606549122, 2.1585593580210563], [6.978007888059858, 1.0125243185553527], [5.89468904584821, 0.9854519982069991], [6.999848158581999, -0.08074410379899163], [6.933197607927004, 1.929952194421052], [6.0996894774427535, 0.11458558092158591], [11.877643713748004, 3.0505054038747157], [6.066690275137741, 1.8939489200457376], [5.910471197966965, 2.122449050060736], [12.001547182929135, 3.0940567306169613], [5.919073724076084, 2.0304613883327662], [6.9653356067707115, 1.0506008476216107], [8.075886320607328, 3.0443026060389915], [6.033745570620001, 2.0788894599377654], [6.829417745845436, 3.0452976754142704], [6.221374844967944, 2.0447822497389687], [5.859435567250385, 2.1491598449161016], [11.93888821380295, 5.88657379115351], [5.894868166815059, 0.9981563027357157], [5.978311007223333, 5.877417675522401], [6.214895598010449, 1.9352141993906042], [6.073171807466587, 3.0063773100690114], [5.952714949132429, 2.1787651636432166], [5.985645611747843, 3.0447246898460762], [5.970421407559555, 2.0225842990779586], [7.061152641827301, 1.8316564435872575], [7.798668247175858, 0.7604624035851847], [8.128492150999708, 2.0674712676719613], [7.953738683753997, 4.070599320936727], [6.1366391309823545, 1.0754607791129878], [7.927670719270266, 0.010767233213151444], [7.1472364640523915, 2.970295884159178], [6.836063216145833, 0.833649114800078], [8.859764979858323, 0.14749648765508136], [6.9807214350826685, 3.983758961553476], [7.932021944096157, 4.013529296008991], [5.701726860315585, 1.9860056319784087], [7.9404093207225905, 2.004598932920737], [10.926247925648045, 3.136852293414066], [7.10878994380514, 1.011446884171569], [10.917700135702892, 4.974122344115416], [7.001254571132183, 2.879084350109273], [11.060690725209312, 2.9320531387935045], [6.85497030334924, 3.8557739921399494], [7.99018286531862, 6.039386615010812], [7.050318449179423, 3.895891065686258], [6.912334339014958, 3.040720174614394], [7.083145263331065, 3.0967029256272767], [5.912503296436652, 1.0393166638212057], [7.129363468544123, 2.0043479663650206], [10.921766117251046, 1.9563545748737499], [11.121283081936015, 1.8789203527685556], [10.748335850969912, 2.0004285155928785], [11.030560568610879, 2.972277676291493], [5.961397726447099, 1.8251638473121403], [9.94663687639824, 5.966677789213851], [8.017548693521146, 4.029619609641353], [5.8553506003624625, 2.9487962950519617], [6.128943537948554, 1.9609365671996986], [7.062464722517217, -0.009027576883264582], [6.128420617710438, 0.801180821430225], [7.094440910160422, -0.04489740360934192], [7.03509341184475, 0.050026605572586716], [6.879950454238935, 1.8751876833317949], [8.045639977755812, 6.173077659197658], [9.06728262700586, 2.9205406150997217], [6.024363242943681, 0.05955236026314173], [6.891616004740921, 2.973492487650892], [9.894052887573428, 1.9855879578409874], [7.043386887239582, 1.9695376645820408], [7.045567998557556, 2.9095163189470963], [9.06217702225317, 1.8348863707680576], [9.97846971995725, 0.009567241667408768], [5.954437421200605, -0.007972613217842482], [5.936384161249518, 1.876230101502567], [7.066083570977445, 0.07475267662462327], [8.882291800678473, 1.0251913838871], [6.970887756569745, 0.9214221388460422], [7.022978083991016, 1.914552603284215], [9.016017429178122, 6.014000709398029], [6.0114764584031395, 3.0314307321258847], [6.845150380715416, 1.0037217595704018], [9.073365630758746, 2.9324450375351336], [6.960255568263738, 4.851632543044284], [8.868270088331897, 3.0448083285038234], [8.921256497192143, 1.1020013109323148], [7.02144015961104, 1.9771715023105672], [7.013247686803096, 0.08070057563085352], [6.935222844389641, 2.951815217769415], [7.077837857542035, 0.1359298524088098], [7.014708298558029, 1.8726694302745768], [7.055524467027397, 1.9730038593667707], [7.008933727167377, 2.919509267896034], [7.034782367940428, 1.835429751236289], [6.976519073384373, -0.006146127682499535], [6.935238903498195, 2.054348780210467], [6.937821871525496, -0.12201829086258963], [7.038176870926125, 3.9867986945032636], [6.855845866633701, 3.1254091097480443], [10.974900011286941, 2.1088993342235187], [10.974071649432956, 1.7774585041420183], [6.018539068959227, 1.9766272565071774], [7.13468316516433, 1.1151014855914188], [7.116744526071204, -0.06514397788554202], [11.126850601709247, 4.047491378425654], [6.019376258536221, 1.9320842119381885], [7.246368860025309, 2.034784418135992], [6.952065651862486, 0.0846767978668116], [12.132894565837923, 2.985098381695673], [6.970173520423853, 0.07994278985346294], [6.988293756886949, 1.9567855633287567], [6.933627937888084, 4.115301039427597], [7.123045627263198, 0.9774514938899617], [7.128472110817466, 4.050531996561231], [7.036493720575152, 1.9272321127446586], [10.919399493875968, 2.02482682435589], [6.890789520704682, 1.9630319879418074], [6.8949934060210625, 2.926995720437767], [7.082699090136753, 3.994422620201759], [7.0002192862826735, 0.8848548988117185], [7.229109364344569, 2.0461446670208527], [6.960366066282821, 3.0034022298306646], [11.939937557824187, 4.075824555399192], [6.912364649898464, 4.948235444758959], [7.037297227297259, 0.12251154564919192], [10.969774519777616, 3.0710272840474193], [7.079965255481578, -0.12931823462122377], [6.8610176254819075, 2.9500343165687766], [9.01057011624151, 1.9547241617508195], [6.999213889488063, 2.1497777322867524], [6.782490081352169, 0.10770844350658715], [9.043208906130609, 2.13052640694524], [7.023929929361674, 1.9684037384096047], [9.084652901996218, 2.772086186093405], [12.203362793335982, 0.8514235981160956], [7.051430149959252, 0.9930487128126692], [7.035572595544885, 3.1834234635991314], [6.92633098722904, 4.022343304146697], [7.016947509290209, 5.915916169421968], [7.020371925217771, -0.13279793612651222], [6.900611413204682, -0.04147957983875572], [9.141679964936062, 1.8560470954542372], [7.029880102846, 3.0226059491945936], [6.9611732519473515, 3.1809053170303723], [8.8976177923208, 1.9443553287875783], [9.05708950010838, 3.015492061048623], [6.863695298241458, 1.9986934263362137], [7.072834519629356, 1.9608443785901326], [7.016236318554253, 3.000427752678715], [6.988025577055251, 1.0571447810440449], [6.9576690505525765, 2.903655804285726], [6.971039215446471, 2.0917395112147084], [7.00291263109983, 1.0087328897945615], [6.889143839760902, 2.994196801433378], [8.842905234872275, 4.963251894448033], [7.028735503617145, 1.821304131424023], [7.018895113678263, 1.0072431453472794], [9.925294939202766, 3.0694844857433825], [7.028962393584534, 3.0443439211276586], [7.005296096327089, 1.9659602205043945], [12.178943609761504, 1.0262455955573466], [7.038107351419328, 1.9897342504837852], [12.094069636379517, 2.963669811671835], [6.978421223031423, 2.003085187521972], [7.115314699646976, 0.07562314660203207], [7.03917032175927, 0.9529087851896095], [7.009989003444992, 3.0195959292888395], [6.917756229139037, 2.941143134201076], [9.940276562517688, 2.9846655438494407], [7.9761705984738835, 3.0760647535536543], [7.023987958838545, 0.13189730360306862], [9.867131738253544, 2.9571489123857426], [7.1822991534071985, 0.879847547365039], [10.125642984103449, 3.0405901735708816], [6.9153282591801055, 1.9453957216319642], [7.904474612345827, 4.92742714150396], [6.765668210454162, 0.03685687778950129], [7.074775429828559, 3.934650627540801], [6.985385927474602, 1.9105286922933975], [7.979964727023825, 2.940510574857207], [7.0784726830064715, 0.995821869039326], [7.104588263544837, -0.139524466740613], [7.106957695337535, 3.7144229841551835], [9.176129038536853, 3.9304273339981366], [6.000337476665308, 1.1097490441583129], [7.049457324270754, 4.893889806826992], [7.1166147582930925, 2.906510388748569], [6.971105994865315, 0.9765906079711282], [7.119013481084501, 3.986881160560075], [6.932789651628247, 2.7142011968984114], [7.907480015045241, 3.8960616781589583], [8.014460421330085, 5.945994416720707], [6.851518301749276, 2.0608559479495177], [7.01778586271622, 4.005776268776607], [5.996413494576923, -0.051242836941258245], [7.050787599758609, 3.130675463526245], [6.972194905026868, 2.7651568360775607], [7.017769656502579, 3.1132062633105515], [6.033539408079173, 1.9398705014907154], [7.011607210010218, 3.8823471886577927], [8.100507115160351, 1.9686216779917445], [6.970406977301956, 1.022305009671588], [6.729668202990257, 1.9478081674899288], [5.92713264110287, 1.0765234701796322], [6.181474910715533, 2.9447853030611753], [8.236957293027753, 1.0698811444425016], [11.948484445835074, 2.1368694964467845], [5.942268015060396, 1.109795180012629], [5.911057138059918, 5.901304263370383], [7.03979579982797, 1.997475531618789], [6.0631579640685, 0.9820404233556751], [8.199454203268536, 1.951917015082084], [5.9656852260198265, 1.1384434910941226], [6.94772269125668, 3.085109294810381], [8.103133851053068, 1.955451135020451], [12.00675729156023, 6.1072900433951975], [12.030532578424006, 3.964645995773847], [7.038678073752235, 1.13159847811672], [12.090952068158249, 1.9757275391390803], [8.166075650293202, 1.7936362553759841], [6.986443901477176, 3.099561922261949], [11.942724970536492, 1.9318143884459789], [6.0568730174011, 1.9285378389182761], [7.103692293781631, 0.9102167084262033], [7.09414988968766, 1.1465028148094547], [7.044099510445788, 1.1379508464161696], [6.933416863688394, 1.0358087794329942], [5.950853880295724, 0.9765310032406693], [6.840372075114291, 4.8790136371210036], [5.956378601915322, 4.070729689565522], [12.146502750428812, 6.04577633683459], [6.127720060223388, 2.883328501832415], [6.033577761641597, 2.0071844235620944], [5.986582502236725, 2.094812517793771], [7.240750447398118, 3.0912557099135025], [6.080989156349924, 5.01227940950555], [6.025575524386637, 5.01238706477824], [5.955355875573795, 0.9027445987640996], [5.937890078160576, 4.998909150770666], [6.110676618423789, 3.0784540406071033], [5.674953181839125, 1.0559303990582407], [6.088373151611346, 0.013714180431259375], [6.015145029558148, -0.11256757096759731], [6.085129415375195, 3.8050705056037195], [5.863084924802325, 0.9985814544264116], [5.962348307127369, 2.2332497899031334], [5.9649230554292885, 3.955195968350242], [6.101692655933659, 3.069396896422898], [6.0894401081490175, 2.972887376160684], [5.9164835965731335, 0.8784959377117616], [5.896117558800773, 1.9255344679652493], [5.97289711333739, -0.0316617609629062], [6.084134968549009, -0.06075461667664183], [10.918517540095785, 3.1386122525733735], [10.070183727038904, 6.115321629255317], [5.990050983452498, -0.09353283091709186], [5.924138608286697, 2.0729685747179154], [6.949656232076195, 2.9498718448944286], [8.018114005839848, 0.1101107564290858], [8.126543077430558, 4.897387229744359], [8.857219177970888, 3.908872159888383], [5.948127207404934, 4.016164423125316], [6.990811487170073, 1.9389746913380288], [6.927486914052092, 1.0094522722351962], [5.933552374410029, 3.967422208927585], [6.031105117232685, 0.8683436501527841], [5.977400002154464, 1.0633357006370534], [6.994025242679091, 6.10295994329139], [9.076769083503248, 4.025698711905054], [6.011524580768517, 0.859419024359475], [6.133430111822938, 1.90359555283246], [8.942452835204952, 2.120369551508353], [6.942437719141302, 6.154449385894584], [8.92549338672737, 2.92165724316931], [8.945049291402125, 3.036899969772065], [8.996144684673796, 3.0331154098227655], [9.043546080883008, 2.9055630759810676], [8.867116989130942, 4.07041346417318], [8.003606068987118, 4.101549054166533], [9.02728031163258, 4.218711985839369], [8.102904241008513, 2.160783021107977], [9.141448056839122, -0.07665087277278673], [9.215057799922313, 2.256245335914358], [9.08340183456365, 4.0457646458974414], [8.999632352514466, 2.8893183559817905], [8.805487918617805, 4.975853774367382], [8.9523988832177, 2.994973582723711], [8.985629634972685, 4.2079249132175125], [5.842879785043578, 2.0499445894812403], [9.04393750290859, 2.918040359232974], [8.95106351968691, 6.04606273148574], [8.834136643046138, 3.9926416981215898], [7.926986203136015, 2.9289387596264533], [6.025628375972559, 2.1352130840064167], [5.949969167505028, -0.19574787415346778], [8.963208365214374, 4.9412417468264165], [8.947705268432195, 6.109685017639482], [6.09638423738171, 2.8548844140700926], [8.8933919808842, 2.8417884200862193], [8.063749156647923, 3.0563611472228756], [7.947413091443773, 3.1289164883917393], [7.039455597226515, 2.958163636675489], [7.920341231306327, 4.004396937513801], [5.9773629443722385, 0.8490225236164677], [9.066533810703417, 3.1390759044178203], [10.100610779726077, 1.0247246996643329], [8.92561125876853, 1.0450300017050018], [9.102371059495145, 5.13581398720287], [9.849136159432607, 6.016396102271576], [10.892620803953003, 4.043709055078779], [5.978786715200699, 1.0042350048490467], [9.12663676809012, 1.9963158208187668], [9.070140914921012, 5.928691494435902], [9.967546870239524, 3.9835956135410377], [9.91985138280326, 1.0551909361908234], [6.940184501731858, -0.1722356877048808], [8.839920749579138, 5.010744228419219], [6.959924207913038, 1.8657062807712839], [9.060122090726743, 2.9974109092435293], [12.002280476821657, 5.020044025055386], [10.919053159885117, 4.818579466633252], [5.914410855799545, 5.855017819140989], [5.866279835209318, -0.056410882941251475], [6.192224841369492, 3.1827719378390036], [6.111530081756645, 2.0061479469859433], [6.128949143551905, 2.076530490413577], [6.033477469445716, 5.906326330425998], [6.129587998123635, 6.060680813539942], [7.066134742578784, 4.875586771735992], [6.055384295782768, 4.985000450821419], [8.92370661951427, 3.135197920873828], [5.721786620427312, 0.09840837642938281], [7.125763753164688, 0.19237506139831273], [5.8138872287761485, 3.183708146389305], [9.114261716149203, 2.84232471681078], [6.239157239014478, 1.9641641452135907], [5.946792678168756, 1.9063258665455989], [9.011072552806795, 2.927848841862687], [6.101691511732264, 4.92374270705918], [7.9244269174044835, 1.9857694407956759], [7.012756389048043, 1.7494148121999564], [5.980147411941227, 2.9658100034459802], [8.772740959841538, 0.9507865536611211], [6.886115972844107, 1.1968485650986245], [10.997454929790718, 4.070978844188203], [11.045040310620069, 2.98950679243181]]}, "id": "el351984608657168", "plugins": [{"type": "reset"}, {"type": "zoom", "button": true, "enabled": false}, {"type": "boxzoom", "button": true, "enabled": false}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "y-intercept (b)", "slider_param_id": "b", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateBSlider"}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "slope (m)", "slider_param_id": "m", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateMSlider"}]});
+      });
+    });
+}else{
+    // require.js not available: dynamically load d3 & mpld3
+    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
+         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                 
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+    mpld3.register_plugin("sliderview", SliderViewPlugin);
+    SliderViewPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    SliderViewPlugin.prototype.constructor = SliderViewPlugin;
+    SliderViewPlugin.prototype.requiredProps = ["idline", "idloss", "slider_param_label", "slider_param_id", "min_val", "max_val", "xlim", "callback_func"];
+    SliderViewPlugin.prototype.defaultProps = {}
+
+    function SliderViewPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    SliderViewPlugin.prototype.draw = function(){
+      var line = mpld3.get_element(this.props.idline);
+      var loss_label = mpld3.get_element(this.props.idloss);
+      var slider_param_label = this.props.slider_param_label;
+      var slider_param_id = this.props.slider_param_id;
+      var min_val = this.props.min_val;
+      var max_val = this.props.max_val;
+      var xlim = this.props.xlim;
+      var callback_func = this.props.callback_func;
+      var data_points = this.fig.data.data02;
+
+      var div = d3.select("#" + this.fig.figid);
+      
+      console.log(this);
+
+      // Create slider
+      slider_container = div.append("div").attr("class", "slider_container");
+      slider_container.append("text", ":first-child").text(slider_param_label+": " + (min_val+((max_val-min_val)/2)).toString()).attr("type","text").attr("id",slider_param_id+"textInput");
+      slider_container.append("input").attr("type", "range").attr("style", "display:block; margin:auto").attr("min", min_val).attr("max", max_val).attr("step", 0.01).attr("value", min_val+((max_val-min_val)/2))
+          .on("change", function() {
+              
+              // update slider text
+              var slider_text = d3.select("#" +slider_param_id+"textInput");
+              slider_text.text(slider_param_label+": " + this.valueAsNumber);
+              
+              // find the value of the other slider
+              var other_input = null;
+              if (this.parentNode.nextSibling != null && this.parentNode.nextSibling.className == "slider_container"){
+                  other_input = this.parentNode.nextSibling;
+              } else if (this.parentNode.previousSibling.className == "slider_container"){
+                  other_input = this.parentNode.previousSibling;
+              };
+              other_slider_val = 0;
+              if (other_input != null){
+                  other_slider_val = other_input.childNodes[1].valueAsNumber;
+              };
+              
+              // calculating update values
+              var updates = null;
+              if (callback_func == "updateBSlider"){
+                updates = sliderUpdated(other_slider_val, this.valueAsNumber, xlim, data_points);
+              } else {
+                updates = sliderUpdated(this.valueAsNumber, other_slider_val, xlim, data_points);
+              };
+              
+              update_line(updates);
+              update_loss(updates[2]);
+          });
+
+      function sliderUpdated(slope, y_intercept, xlim, data_points_list) {
+        var xmin = xlim[0];
+        var xmax = xlim[1];
+        var line_loss = loss(slope, y_intercept, data_points_list);
+        return [[xmin, y_intercept + slope * xmin],[xmax, y_intercept + slope * xmax], [line_loss]];
+      };
+      
+      function loss(m,b,data_points_list) {
+        var sqerror = 0;
+            for (i = 0; i < data_points_list.length; i++){
+                var line_y = m*data_points_list[i][0] + b;
+                var residual = data_points_list[i][1] - line_y;
+                sqerror += Math.pow(residual,2);
+            };
+        return sqerror/data_points_list.length;
+      };
+      
+      function update_line(line_data){
+        line.data[0]  = line_data[0];
+        line.data[1]  = line_data[1];
+        console.log(line)
+        line.elements()
+          .attr("d", line.datafunc(line.data))
+          .style("stroke", "blue");        
+      };
+       
+      function update_loss(loss_data){
+        loss_label.elements()[0][0][0][0]
+            .textContent = "loss: " + loss_data;
+      };
+    };
+    
+                 mpld3.draw_figure("fig_el3519846086571682498570819", {"width": 576.0, "height": 288.0, "axes": [{"bbox": [0.125, 0.125, 0.775, 0.755], "xlim": [4.981338452201847, 12.896977522973259], "ylim": [-0.5293657512625252, 6.506695536306717], "xdomain": [4.981338452201847, 12.896977522973259], "ydomain": [-0.5293657512625252, 6.506695536306717], "xscale": "linear", "yscale": "linear", "axes": [{"position": "bottom", "nticks": 10, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}, {"position": "left", "nticks": 9, "tickvalues": null, "tickformat": null, "scale": "linear", "fontsize": 10.0, "grid": {"gridOn": false}, "visible": true}], "axesbg": "#FFFFFF", "axesbgalpha": null, "zoomable": true, "id": "el351984610970896", "lines": [{"data": "data01", "xindex": 0, "yindex": 1, "coordinates": "data", "id": "el351984615119120", "color": "#1F77B4", "linewidth": 1.5, "dasharray": "none", "alpha": 1, "zorder": 2, "drawstyle": "default"}], "paths": [], "markers": [], "texts": [{"text": "loss: 4.7942857142857145", "position": [1, 1], "coordinates": "axes", "h_anchor": "end", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984612236240"}, {"text": "grade", "position": [0.5, -0.09657836644591611], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "hanging", "rotation": -0.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608850832"}, {"text": "hrs on social media / day", "position": [-0.038922491039426535, 0.49999999999999994], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -90.0, "fontsize": 10.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984608848528"}, {"text": "Grade vs. Social Media Time at ISF", "position": [0.5, 1.0275938189845473], "coordinates": "axes", "h_anchor": "middle", "v_baseline": "auto", "rotation": -0.0, "fontsize": 12.0, "color": "#000000", "alpha": 1, "zorder": 3, "id": "el351984615151312"}], "collections": [{"offsets": "data02", "xindex": 0, "yindex": 1, "paths": [[[[0.0, -0.5], [0.13260155, -0.5], [0.25978993539242673, -0.44731684579412084], [0.3535533905932738, -0.3535533905932738], [0.44731684579412084, -0.25978993539242673], [0.5, -0.13260155], [0.5, 0.0], [0.5, 0.13260155], [0.44731684579412084, 0.25978993539242673], [0.3535533905932738, 0.3535533905932738], [0.25978993539242673, 0.44731684579412084], [0.13260155, 0.5], [0.0, 0.5], [-0.13260155, 0.5], [-0.25978993539242673, 0.44731684579412084], [-0.3535533905932738, 0.3535533905932738], [-0.44731684579412084, 0.25978993539242673], [-0.5, 0.13260155], [-0.5, 0.0], [-0.5, -0.13260155], [-0.44731684579412084, -0.25978993539242673], [-0.3535533905932738, -0.3535533905932738], [-0.25978993539242673, -0.44731684579412084], [-0.13260155, -0.5], [0.0, -0.5]], ["M", "C", "C", "C", "C", "C", "C", "C", "C", "Z"]]], "pathtransforms": [[6.0, 0.0, 0.0, 6.0, 0.0, 0.0]], "alphas": [0.5], "edgecolors": ["#1F77B4"], "facecolors": ["#1F77B4"], "edgewidths": [1.0], "offsetcoordinates": "data", "pathcoordinates": "display", "zorder": 1, "id": "el351984613140432"}], "images": [], "sharex": [], "sharey": []}], "data": {"data01": [[5.341140228146002, 1.0], [12.537175747029105, 1.0]], "data02": [[5.9392488628461075, 3.956300566464006], [9.071374191856208, 4.863248763890248], [9.010986280667174, 2.0261380443397843], [8.796065499381399, 3.0363676349750155], [8.914199606549122, 2.1585593580210563], [6.978007888059858, 1.0125243185553527], [5.89468904584821, 0.9854519982069991], [6.999848158581999, -0.08074410379899163], [6.933197607927004, 1.929952194421052], [6.0996894774427535, 0.11458558092158591], [11.877643713748004, 3.0505054038747157], [6.066690275137741, 1.8939489200457376], [5.910471197966965, 2.122449050060736], [12.001547182929135, 3.0940567306169613], [5.919073724076084, 2.0304613883327662], [6.9653356067707115, 1.0506008476216107], [8.075886320607328, 3.0443026060389915], [6.033745570620001, 2.0788894599377654], [6.829417745845436, 3.0452976754142704], [6.221374844967944, 2.0447822497389687], [5.859435567250385, 2.1491598449161016], [11.93888821380295, 5.88657379115351], [5.894868166815059, 0.9981563027357157], [5.978311007223333, 5.877417675522401], [6.214895598010449, 1.9352141993906042], [6.073171807466587, 3.0063773100690114], [5.952714949132429, 2.1787651636432166], [5.985645611747843, 3.0447246898460762], [5.970421407559555, 2.0225842990779586], [7.061152641827301, 1.8316564435872575], [7.798668247175858, 0.7604624035851847], [8.128492150999708, 2.0674712676719613], [7.953738683753997, 4.070599320936727], [6.1366391309823545, 1.0754607791129878], [7.927670719270266, 0.010767233213151444], [7.1472364640523915, 2.970295884159178], [6.836063216145833, 0.833649114800078], [8.859764979858323, 0.14749648765508136], [6.9807214350826685, 3.983758961553476], [7.932021944096157, 4.013529296008991], [5.701726860315585, 1.9860056319784087], [7.9404093207225905, 2.004598932920737], [10.926247925648045, 3.136852293414066], [7.10878994380514, 1.011446884171569], [10.917700135702892, 4.974122344115416], [7.001254571132183, 2.879084350109273], [11.060690725209312, 2.9320531387935045], [6.85497030334924, 3.8557739921399494], [7.99018286531862, 6.039386615010812], [7.050318449179423, 3.895891065686258], [6.912334339014958, 3.040720174614394], [7.083145263331065, 3.0967029256272767], [5.912503296436652, 1.0393166638212057], [7.129363468544123, 2.0043479663650206], [10.921766117251046, 1.9563545748737499], [11.121283081936015, 1.8789203527685556], [10.748335850969912, 2.0004285155928785], [11.030560568610879, 2.972277676291493], [5.961397726447099, 1.8251638473121403], [9.94663687639824, 5.966677789213851], [8.017548693521146, 4.029619609641353], [5.8553506003624625, 2.9487962950519617], [6.128943537948554, 1.9609365671996986], [7.062464722517217, -0.009027576883264582], [6.128420617710438, 0.801180821430225], [7.094440910160422, -0.04489740360934192], [7.03509341184475, 0.050026605572586716], [6.879950454238935, 1.8751876833317949], [8.045639977755812, 6.173077659197658], [9.06728262700586, 2.9205406150997217], [6.024363242943681, 0.05955236026314173], [6.891616004740921, 2.973492487650892], [9.894052887573428, 1.9855879578409874], [7.043386887239582, 1.9695376645820408], [7.045567998557556, 2.9095163189470963], [9.06217702225317, 1.8348863707680576], [9.97846971995725, 0.009567241667408768], [5.954437421200605, -0.007972613217842482], [5.936384161249518, 1.876230101502567], [7.066083570977445, 0.07475267662462327], [8.882291800678473, 1.0251913838871], [6.970887756569745, 0.9214221388460422], [7.022978083991016, 1.914552603284215], [9.016017429178122, 6.014000709398029], [6.0114764584031395, 3.0314307321258847], [6.845150380715416, 1.0037217595704018], [9.073365630758746, 2.9324450375351336], [6.960255568263738, 4.851632543044284], [8.868270088331897, 3.0448083285038234], [8.921256497192143, 1.1020013109323148], [7.02144015961104, 1.9771715023105672], [7.013247686803096, 0.08070057563085352], [6.935222844389641, 2.951815217769415], [7.077837857542035, 0.1359298524088098], [7.014708298558029, 1.8726694302745768], [7.055524467027397, 1.9730038593667707], [7.008933727167377, 2.919509267896034], [7.034782367940428, 1.835429751236289], [6.976519073384373, -0.006146127682499535], [6.935238903498195, 2.054348780210467], [6.937821871525496, -0.12201829086258963], [7.038176870926125, 3.9867986945032636], [6.855845866633701, 3.1254091097480443], [10.974900011286941, 2.1088993342235187], [10.974071649432956, 1.7774585041420183], [6.018539068959227, 1.9766272565071774], [7.13468316516433, 1.1151014855914188], [7.116744526071204, -0.06514397788554202], [11.126850601709247, 4.047491378425654], [6.019376258536221, 1.9320842119381885], [7.246368860025309, 2.034784418135992], [6.952065651862486, 0.0846767978668116], [12.132894565837923, 2.985098381695673], [6.970173520423853, 0.07994278985346294], [6.988293756886949, 1.9567855633287567], [6.933627937888084, 4.115301039427597], [7.123045627263198, 0.9774514938899617], [7.128472110817466, 4.050531996561231], [7.036493720575152, 1.9272321127446586], [10.919399493875968, 2.02482682435589], [6.890789520704682, 1.9630319879418074], [6.8949934060210625, 2.926995720437767], [7.082699090136753, 3.994422620201759], [7.0002192862826735, 0.8848548988117185], [7.229109364344569, 2.0461446670208527], [6.960366066282821, 3.0034022298306646], [11.939937557824187, 4.075824555399192], [6.912364649898464, 4.948235444758959], [7.037297227297259, 0.12251154564919192], [10.969774519777616, 3.0710272840474193], [7.079965255481578, -0.12931823462122377], [6.8610176254819075, 2.9500343165687766], [9.01057011624151, 1.9547241617508195], [6.999213889488063, 2.1497777322867524], [6.782490081352169, 0.10770844350658715], [9.043208906130609, 2.13052640694524], [7.023929929361674, 1.9684037384096047], [9.084652901996218, 2.772086186093405], [12.203362793335982, 0.8514235981160956], [7.051430149959252, 0.9930487128126692], [7.035572595544885, 3.1834234635991314], [6.92633098722904, 4.022343304146697], [7.016947509290209, 5.915916169421968], [7.020371925217771, -0.13279793612651222], [6.900611413204682, -0.04147957983875572], [9.141679964936062, 1.8560470954542372], [7.029880102846, 3.0226059491945936], [6.9611732519473515, 3.1809053170303723], [8.8976177923208, 1.9443553287875783], [9.05708950010838, 3.015492061048623], [6.863695298241458, 1.9986934263362137], [7.072834519629356, 1.9608443785901326], [7.016236318554253, 3.000427752678715], [6.988025577055251, 1.0571447810440449], [6.9576690505525765, 2.903655804285726], [6.971039215446471, 2.0917395112147084], [7.00291263109983, 1.0087328897945615], [6.889143839760902, 2.994196801433378], [8.842905234872275, 4.963251894448033], [7.028735503617145, 1.821304131424023], [7.018895113678263, 1.0072431453472794], [9.925294939202766, 3.0694844857433825], [7.028962393584534, 3.0443439211276586], [7.005296096327089, 1.9659602205043945], [12.178943609761504, 1.0262455955573466], [7.038107351419328, 1.9897342504837852], [12.094069636379517, 2.963669811671835], [6.978421223031423, 2.003085187521972], [7.115314699646976, 0.07562314660203207], [7.03917032175927, 0.9529087851896095], [7.009989003444992, 3.0195959292888395], [6.917756229139037, 2.941143134201076], [9.940276562517688, 2.9846655438494407], [7.9761705984738835, 3.0760647535536543], [7.023987958838545, 0.13189730360306862], [9.867131738253544, 2.9571489123857426], [7.1822991534071985, 0.879847547365039], [10.125642984103449, 3.0405901735708816], [6.9153282591801055, 1.9453957216319642], [7.904474612345827, 4.92742714150396], [6.765668210454162, 0.03685687778950129], [7.074775429828559, 3.934650627540801], [6.985385927474602, 1.9105286922933975], [7.979964727023825, 2.940510574857207], [7.0784726830064715, 0.995821869039326], [7.104588263544837, -0.139524466740613], [7.106957695337535, 3.7144229841551835], [9.176129038536853, 3.9304273339981366], [6.000337476665308, 1.1097490441583129], [7.049457324270754, 4.893889806826992], [7.1166147582930925, 2.906510388748569], [6.971105994865315, 0.9765906079711282], [7.119013481084501, 3.986881160560075], [6.932789651628247, 2.7142011968984114], [7.907480015045241, 3.8960616781589583], [8.014460421330085, 5.945994416720707], [6.851518301749276, 2.0608559479495177], [7.01778586271622, 4.005776268776607], [5.996413494576923, -0.051242836941258245], [7.050787599758609, 3.130675463526245], [6.972194905026868, 2.7651568360775607], [7.017769656502579, 3.1132062633105515], [6.033539408079173, 1.9398705014907154], [7.011607210010218, 3.8823471886577927], [8.100507115160351, 1.9686216779917445], [6.970406977301956, 1.022305009671588], [6.729668202990257, 1.9478081674899288], [5.92713264110287, 1.0765234701796322], [6.181474910715533, 2.9447853030611753], [8.236957293027753, 1.0698811444425016], [11.948484445835074, 2.1368694964467845], [5.942268015060396, 1.109795180012629], [5.911057138059918, 5.901304263370383], [7.03979579982797, 1.997475531618789], [6.0631579640685, 0.9820404233556751], [8.199454203268536, 1.951917015082084], [5.9656852260198265, 1.1384434910941226], [6.94772269125668, 3.085109294810381], [8.103133851053068, 1.955451135020451], [12.00675729156023, 6.1072900433951975], [12.030532578424006, 3.964645995773847], [7.038678073752235, 1.13159847811672], [12.090952068158249, 1.9757275391390803], [8.166075650293202, 1.7936362553759841], [6.986443901477176, 3.099561922261949], [11.942724970536492, 1.9318143884459789], [6.0568730174011, 1.9285378389182761], [7.103692293781631, 0.9102167084262033], [7.09414988968766, 1.1465028148094547], [7.044099510445788, 1.1379508464161696], [6.933416863688394, 1.0358087794329942], [5.950853880295724, 0.9765310032406693], [6.840372075114291, 4.8790136371210036], [5.956378601915322, 4.070729689565522], [12.146502750428812, 6.04577633683459], [6.127720060223388, 2.883328501832415], [6.033577761641597, 2.0071844235620944], [5.986582502236725, 2.094812517793771], [7.240750447398118, 3.0912557099135025], [6.080989156349924, 5.01227940950555], [6.025575524386637, 5.01238706477824], [5.955355875573795, 0.9027445987640996], [5.937890078160576, 4.998909150770666], [6.110676618423789, 3.0784540406071033], [5.674953181839125, 1.0559303990582407], [6.088373151611346, 0.013714180431259375], [6.015145029558148, -0.11256757096759731], [6.085129415375195, 3.8050705056037195], [5.863084924802325, 0.9985814544264116], [5.962348307127369, 2.2332497899031334], [5.9649230554292885, 3.955195968350242], [6.101692655933659, 3.069396896422898], [6.0894401081490175, 2.972887376160684], [5.9164835965731335, 0.8784959377117616], [5.896117558800773, 1.9255344679652493], [5.97289711333739, -0.0316617609629062], [6.084134968549009, -0.06075461667664183], [10.918517540095785, 3.1386122525733735], [10.070183727038904, 6.115321629255317], [5.990050983452498, -0.09353283091709186], [5.924138608286697, 2.0729685747179154], [6.949656232076195, 2.9498718448944286], [8.018114005839848, 0.1101107564290858], [8.126543077430558, 4.897387229744359], [8.857219177970888, 3.908872159888383], [5.948127207404934, 4.016164423125316], [6.990811487170073, 1.9389746913380288], [6.927486914052092, 1.0094522722351962], [5.933552374410029, 3.967422208927585], [6.031105117232685, 0.8683436501527841], [5.977400002154464, 1.0633357006370534], [6.994025242679091, 6.10295994329139], [9.076769083503248, 4.025698711905054], [6.011524580768517, 0.859419024359475], [6.133430111822938, 1.90359555283246], [8.942452835204952, 2.120369551508353], [6.942437719141302, 6.154449385894584], [8.92549338672737, 2.92165724316931], [8.945049291402125, 3.036899969772065], [8.996144684673796, 3.0331154098227655], [9.043546080883008, 2.9055630759810676], [8.867116989130942, 4.07041346417318], [8.003606068987118, 4.101549054166533], [9.02728031163258, 4.218711985839369], [8.102904241008513, 2.160783021107977], [9.141448056839122, -0.07665087277278673], [9.215057799922313, 2.256245335914358], [9.08340183456365, 4.0457646458974414], [8.999632352514466, 2.8893183559817905], [8.805487918617805, 4.975853774367382], [8.9523988832177, 2.994973582723711], [8.985629634972685, 4.2079249132175125], [5.842879785043578, 2.0499445894812403], [9.04393750290859, 2.918040359232974], [8.95106351968691, 6.04606273148574], [8.834136643046138, 3.9926416981215898], [7.926986203136015, 2.9289387596264533], [6.025628375972559, 2.1352130840064167], [5.949969167505028, -0.19574787415346778], [8.963208365214374, 4.9412417468264165], [8.947705268432195, 6.109685017639482], [6.09638423738171, 2.8548844140700926], [8.8933919808842, 2.8417884200862193], [8.063749156647923, 3.0563611472228756], [7.947413091443773, 3.1289164883917393], [7.039455597226515, 2.958163636675489], [7.920341231306327, 4.004396937513801], [5.9773629443722385, 0.8490225236164677], [9.066533810703417, 3.1390759044178203], [10.100610779726077, 1.0247246996643329], [8.92561125876853, 1.0450300017050018], [9.102371059495145, 5.13581398720287], [9.849136159432607, 6.016396102271576], [10.892620803953003, 4.043709055078779], [5.978786715200699, 1.0042350048490467], [9.12663676809012, 1.9963158208187668], [9.070140914921012, 5.928691494435902], [9.967546870239524, 3.9835956135410377], [9.91985138280326, 1.0551909361908234], [6.940184501731858, -0.1722356877048808], [8.839920749579138, 5.010744228419219], [6.959924207913038, 1.8657062807712839], [9.060122090726743, 2.9974109092435293], [12.002280476821657, 5.020044025055386], [10.919053159885117, 4.818579466633252], [5.914410855799545, 5.855017819140989], [5.866279835209318, -0.056410882941251475], [6.192224841369492, 3.1827719378390036], [6.111530081756645, 2.0061479469859433], [6.128949143551905, 2.076530490413577], [6.033477469445716, 5.906326330425998], [6.129587998123635, 6.060680813539942], [7.066134742578784, 4.875586771735992], [6.055384295782768, 4.985000450821419], [8.92370661951427, 3.135197920873828], [5.721786620427312, 0.09840837642938281], [7.125763753164688, 0.19237506139831273], [5.8138872287761485, 3.183708146389305], [9.114261716149203, 2.84232471681078], [6.239157239014478, 1.9641641452135907], [5.946792678168756, 1.9063258665455989], [9.011072552806795, 2.927848841862687], [6.101691511732264, 4.92374270705918], [7.9244269174044835, 1.9857694407956759], [7.012756389048043, 1.7494148121999564], [5.980147411941227, 2.9658100034459802], [8.772740959841538, 0.9507865536611211], [6.886115972844107, 1.1968485650986245], [10.997454929790718, 4.070978844188203], [11.045040310620069, 2.98950679243181]]}, "id": "el351984608657168", "plugins": [{"type": "reset"}, {"type": "zoom", "button": true, "enabled": false}, {"type": "boxzoom", "button": true, "enabled": false}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "y-intercept (b)", "slider_param_id": "b", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateBSlider"}, {"type": "sliderview", "idline": "el351984615119120", "idloss": "el351984612236240", "slider_param_label": "slope (m)", "slider_param_id": "m", "min_val": 0, "max_val": 2, "xlim": [4.981338452201847, 12.896977522973259], "callback_func": "updateMSlider"}]});
+            })
+         });
+}
+</script>
